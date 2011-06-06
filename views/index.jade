@@ -4,16 +4,28 @@ html(lang="en")
     title Apples to Apples
     script(type="text/javascript", src="http://cdn.socket.io/stable/socket.io.js")
     script(type="text/javascript", src="http://code.jquery.com/jquery-1.6.1.min.js")
-    script(type="text/javascript")
-      var socket = new io.Socket(null, {port: 3001});
-      socket.connect();
-      socket.on('message', function(msg){ 
-        if(msg.event == 'new_card') {
-          $("#my_nouns").append('<li>'+msg.data+'</li>');
-        } else { alert(msg) }
-        });
+    script(type="text/javascript", src="/client.js")
              
   body
-    h1 Apples
-    ul#my_nouns 
-
+    header
+     h1 Apples
+    content
+      h2 My Nouns
+      ul#my_nouns
+      h2 Users
+      ul#user_list
+    footer
+      p
+        | An
+        a(href="https://github.com/cmpolis/Apples-and-Oranges") open source 
+        | application by 
+        a(href="http://twitter.com/chrispolis") @ChrisPolis
+        br
+        | Built with 
+        a(href="https://github.com/joyent/node") Node.JS
+        | , 
+        a(href="https://github.com/learnboost/socket.io-node") Socket.IO
+        | , et al. 
+        br
+        | Development is being chronicled on
+        a(href="http://www.bytemuse.com") ByteMuse.com

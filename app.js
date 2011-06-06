@@ -22,6 +22,7 @@ ar.init({
 var app = express.createServer(express.bodyParser());
 app.set('view engine', 'jade');
 app.set('view options', {layout: false});
+app.use(express.static(__dirname + '/public'));
 app.use(express.logger());
 
 app.get('/', function(req, res){
@@ -46,19 +47,54 @@ var deal_noun = function(user_id, client) {
 
 };
 
-//Assign user 7 cards
+// Assign user 7 cards
 var deal_nouns = function(user_id, client) {
   for(var ndx = 0; ndx < 7; ndx++) {
     deal_noun(user_id, client);
   }
 };
 
+// Setup Socket.IO
 var socket = io.listen(app);
 
-socket.on('connection', function(client){
-  user = ar.User.create({name: client.sessionID});
-  user.save(function(err, db_res){
+socket.on('connection', function(client) {
+  user = ar.User.create({
+    name: client.sessionId,
+    status: 'active'
+  });
+  
+  // Add user to database, send relavent data to client
+  user.save(function(err, db_res) {
+ 
+    // Deal 7 cards
     deal_nouns(user.id, client);
+
+    // Notify this client of other active clients
+    ar.User.findAllByStatus('active', function(users) {
+      users.forEach(function(other_user){
+        client.send({
+          event: 'add_user',
+          data: other_user.name
+        });
+      })
+    });
+
+    // Notify other clients of this client
+    client.broadcast({
+      event: 'add_user',
+      data: user.name
+    });
+  });
+
+  // Update client status in db, alert other clients
+  client.on('disconnect', function() {
+    user.status = 'disconnected';
+    user.save(function(err, db_res) {;
+      socket.broadcast({
+        event: 'remove_user',
+        data: user.name
+      });
+    });    
   });
 
 });
