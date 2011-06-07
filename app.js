@@ -31,6 +31,13 @@ app.get('/', function(req, res){
 
 app.listen(3001);
 
+// Helper functions
+function event_obj(event_name, data_obj) {
+  return { event: event_name,
+           data: data_obj };
+}
+
+
 // Assign user a noun card
 var deal_noun = function(user_id, client) {
   var word = nouns[Math.floor(Math.random()*nouns.length)];
@@ -39,10 +46,7 @@ var deal_noun = function(user_id, client) {
   new_noun.save(function(err, db_res){
     
     // Notify client of each card after save
-    client.send({
-      event: 'new_card',
-      data: new_noun.word
-    });
+    client.send(event_obj('new_card', new_noun.word));
   });
 
 };
@@ -57,6 +61,7 @@ var deal_nouns = function(user_id, client) {
 // Setup Socket.IO
 var socket = io.listen(app);
 
+// Handle socket events
 socket.on('connection', function(client) {
   user = ar.User.create({
     name: client.sessionId,
@@ -72,29 +77,32 @@ socket.on('connection', function(client) {
     // Notify this client of other active clients
     ar.User.findAllByStatus('active', function(users) {
       users.forEach(function(other_user){
-        client.send({
-          event: 'add_user',
-          data: other_user.name
-        });
-      })
+        client.send(event_obj('add_user', other_user.name));
+      });
     });
 
     // Notify other clients of this client
-    client.broadcast({
-      event: 'add_user',
-      data: user.name
-    });
+    client.broadcast(event_obj('add_user', user.name));
   });
 
   // Update client status in db, alert other clients
   client.on('disconnect', function() {
     user.status = 'disconnected';
-    user.save(function(err, db_res) {;
-      socket.broadcast({
-        event: 'remove_user',
-        data: user.name
-      });
+    user.save(function(err, db_res) {
+      socket.broadcast(event_obj('remove_user', user.name));
     });    
   });
-
+  
 });
+
+// Game processes
+
+// Start in selection mode 
+// Enable users to pick a card
+// Set timer
+// Handle event if all active users have selected or timer is triggered
+
+// Switch to judging mode
+// Enable judge to pick card
+// Set timer
+// Handle event if judge picks a card or timer is triggered
