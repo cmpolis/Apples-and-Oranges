@@ -63,7 +63,7 @@ var socket = io.listen(app);
 
 // Handle socket events
 socket.on('connection', function(client) {
-  user = ar.User.create({
+  var user = ar.User.create({
     name: client.sessionId,
     status: 'active'
   });
@@ -77,19 +77,25 @@ socket.on('connection', function(client) {
     // Notify this client of other active clients
     ar.User.findAllByStatus('active', function(users) {
       users.forEach(function(other_user){
-        client.send(event_obj('add_user', other_user.name));
+        client.send(event_obj('add_user', {
+          id: other_user.id, 
+          name: other_user.name
+        }));
       });
     });
 
     // Notify other clients of this client
-    client.broadcast(event_obj('add_user', user.name));
+    client.broadcast(event_obj('add_user', {
+      id: user.id, 
+      name: user.name
+    }));
   });
 
   // Update client status in db, alert other clients
   client.on('disconnect', function() {
     user.status = 'disconnected';
     user.save(function(err, db_res) {
-      socket.broadcast(event_obj('remove_user', user.name));
+      socket.broadcast(event_obj('remove_user', user.id));
     });    
   });
   
