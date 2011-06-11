@@ -85,7 +85,7 @@ $(function() {
   // Handle update from server
   socket.on('message', function(msg){
     if(msg.event == 'new_card') {
-      var noun = new Noun({word: msg.data});
+      var noun = new Noun({word: msg.data.word, id: msg.data.id});
       userNouns.add(noun);
 
     } else if(msg.event == 'add_user') {

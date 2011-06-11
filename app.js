@@ -46,7 +46,10 @@ var deal_noun = function(user_id, client) {
   new_noun.save(function(err, db_res){
     
     // Notify client of each card after save
-    client.send(event_obj('new_card', new_noun.word));
+    client.send(event_obj('new_card', {
+      id: new_noun.id, 
+      word: new_noun.word
+    }));
   });
 
 };
