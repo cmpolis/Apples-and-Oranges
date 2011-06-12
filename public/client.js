@@ -1,5 +1,14 @@
 $(function() {
 
+  function event_obj(event_name, data_obj) {
+    return { event: event_name,
+              data: data_obj };
+  }
+
+  // Socket.IO
+  var socket = new io.Socket(null, {port: 3001});
+  socket.connect();
+
   // Backbone
   var Noun = Backbone.Model.extend();
   
@@ -10,12 +19,26 @@ $(function() {
   
   var NounView = Backbone.View.extend({
     tagName: 'li',
+
+    events: {
+      'click span.play_noun': 'play'
+    },
+
     initialize: function(){
-      _.bindAll(this, 'render');
+      _.bindAll(this, 'render', 'unrender', 'play');
+    
+      this.model.bind('remove', this.unrender);
     },
     render: function(){
-      $(this.el).html(this.model.get('word'));
+      $(this.el).html(this.model.get('word')+' <span class="play_noun">Play</span>');
       return this;
+    },
+    unrender: function(){
+      $(this.el).remove();
+    },
+    play: function(){
+      alert('played: ' + this.model.get('word'));
+      socket.send(event_obj('play_card', this.model.id));
     }
   });
 
@@ -77,11 +100,7 @@ $(function() {
   });
   var usersListView = new UserListView();
   
-
-  // Socket.IO
-  var socket = new io.Socket(null, {port: 3001});
-  socket.connect();
-
+  
   // Handle update from server
   socket.on('message', function(msg){
     if(msg.event == 'new_card') {
@@ -95,6 +114,9 @@ $(function() {
     } else if(msg.event == 'remove_user') {
       users.remove(msg.data);
 
+    } else if(msg.event == 'remove_card') {
+      userNouns.remove(msg.data);
+    
     } else { alert(msg) }
   });
 

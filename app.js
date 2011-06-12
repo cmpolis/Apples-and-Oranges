@@ -48,7 +48,8 @@ var deal_noun = function(user_id, client) {
     // Notify client of each card after save
     client.send(event_obj('new_card', {
       id: new_noun.id, 
-      word: new_noun.word
+      word: new_noun.word,
+      status: 'in_hand'
     }));
   });
 
@@ -102,6 +103,18 @@ socket.on('connection', function(client) {
     });    
   });
   
+  // Respond to updates from client
+  client.on('message', function(msg) {
+    if(msg.event == 'play_card') {
+      ar.Noun.findById(msg.data, function(card) {
+        card.status = 'played';
+        card.save(function(err,res){ });         
+        client.send(event_obj('remove_card', card.id));
+      });
+      deal_noun(user.id, client);
+    } else { console.log(msg) }
+  });
+
 });
 
 // Game processes
