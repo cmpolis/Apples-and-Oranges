@@ -55,10 +55,15 @@ $(function() {
         model: noun
       });
       this.el.append(nounView.render().el);
+    },
+    enablePlay: function() {
+      $('.play_noun').show();
+    },
+    disablePlay: function() {
+      $('.play_noun').hide();
     }
   });
   var userNounView = new NounListView();
-
  
   var User = Backbone.Model.extend();
   
@@ -116,6 +121,14 @@ $(function() {
 
     } else if(msg.event == 'remove_card') {
       userNouns.remove(msg.data);
+
+    } else if(msg.event == 'mode_playing') {
+      userNounView.enablePlay();
+      $('#adj').html(msg.data.word);
+      $('#judge').html(msg.data.judge);
+
+    } else if(msg.event == 'mode_judging') {
+      userNounView.disablePlay();
     
     } else { alert(msg) }
   });

@@ -37,6 +37,7 @@ function event_obj(event_name, data_obj) {
            data: data_obj };
 }
 
+var adj; // Adjective that is in play
 
 // Assign user a noun card
 var deal_noun = function(user_id, client) {
@@ -105,26 +106,92 @@ socket.on('connection', function(client) {
   
   // Respond to updates from client
   client.on('message', function(msg) {
+ 
+    // User picks a noun card 
     if(msg.event == 'play_card') {
+      
+      // Update noun card
       ar.Noun.findById(msg.data, function(card) {
         card.status = 'played';
+        card.adj_id = adj.id;
         card.save(function(err,res){ });         
         client.send(event_obj('remove_card', card.id));
+
+        // Place card in pile
       });
       deal_noun(user.id, client);
+    
+    // Judge picks winning card
+    } else if(msg.event == 'judge_pick') {
+    
     } else { console.log(msg) }
   });
 
 });
 
 // Game processes
+var mode; // ie: waiting, playing, judging
+var playInt, judgeInt;
 
-// Start in selection mode 
-// Enable users to pick a card
-// Set timer
-// Handle event if all active users have selected or timer is triggered
+// while(true) {
+  // Start in waiting mode, wait 30 sec
+  mode = 'waiting';
 
-// Switch to judging mode
-// Enable judge to pick card
-// Set timer
-// Handle event if judge picks a card or timer is triggered
+function start_judge_timer(){
+  judgeInt = setInterval(function(){
+    mode = 'judging';
+    console.log("MODE CHANGED TO PLAYING");
+
+    // Create an adjective(game) object - choose adj and judge
+    var word = adjectives[Math.floor(Math.random()*adjectives.length)];
+    ar.User.findAllByStatus('active', function(users) {
+
+      var user = users[Math.floor(Math.random()*users.length)];
+
+      adj = ar.Adj.create({
+        word: word, 
+        judge_id: user.id,
+        status: 'playing'
+      });
+
+      adj.save(function(err, db_res){ });
+      
+      console.log("  word: " + word);
+      console.log("  judge: " + user.name);
+
+      socket.broadcast(event_obj('mode_playing',{
+        judge: user.name,
+        word: word
+      }));
+    });
+
+    start_play_timer();
+    clearInterval(judgeInt);
+  }, 10000);
+}
+
+function start_play_timer(){
+  playInt = setInterval(function(){
+    mode = 'judging';
+    console.log("MODE CHANGED TO JUDGING");
+   
+    // Notify client, show cards face up
+    socket.broadcast(event_obj('mode_judging',''));
+
+    start_judge_timer();
+    clearInterval(playInt);
+  }, 10000);
+}
+
+start_play_timer();
+
+  // Go into selection mode 
+  // Enable users to pick a card
+  // Set timer
+  // Handle event if all active users have selected or timer is triggered
+
+  // Switch to judging mode
+  // Enable judge to pick card
+  // Set timer
+  // Handle event if judge picks a card or timer is triggered
+// }
