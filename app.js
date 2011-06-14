@@ -118,6 +118,7 @@ socket.on('connection', function(client) {
         client.send(event_obj('remove_card', card.id));
 
         // Place card in pile
+        socket.broadcast(event_obj('add_to_pile', {id: card.id, word: card.word}));
       });
       deal_noun(user.id, client);
     
@@ -175,7 +176,7 @@ function start_play_timer(){
     mode = 'judging';
     console.log("MODE CHANGED TO JUDGING");
    
-    // Notify client, show cards face up
+    // Notify client, reveal cards
     socket.broadcast(event_obj('mode_judging',''));
 
     start_judge_timer();

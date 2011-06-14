@@ -37,7 +37,7 @@ $(function() {
       $(this.el).remove();
     },
     play: function(){
-      alert('played: ' + this.model.get('word'));
+      userNounView.disablePlay();
       socket.send(event_obj('play_card', this.model.id));
     }
   });
@@ -105,7 +105,51 @@ $(function() {
   });
   var usersListView = new UserListView();
   
+  var PlayedNoun = Backbone.Model.extend();
   
+  var PlayedNounCollection = Backbone.Collection.extend({
+    model: PlayedNoun
+  });
+  var nounPile = new PlayedNounCollection();
+  
+  var PlayedNounView = Backbone.View.extend({
+    tagName: 'li',
+
+    initialize: function(){
+      _.bindAll(this, 'render', 'unrender', 'reveal');
+
+      this.model.view = this;
+      this.model.bind('remove', this.unrender);
+    },
+    render: function(){
+      $(this.el).html('Facedown card');
+      return this;
+    },
+    unrender: function(){
+      $(this.el).remove();
+    },
+    reveal: function(){
+      $(this.el).html(this.model.get('word'));
+    }
+  });
+
+  var NounPileView = Backbone.View.extend({
+    el: $('#played_nouns'),
+    initialize: function(){ 
+      _.bindAll(this, 'appendNoun');
+
+      this.collection = nounPile;    
+      this.collection.bind('add', this.appendNoun);
+    },
+    appendNoun: function(noun) {
+      var nounView = new PlayedNounView({
+        model: noun
+      });
+      this.el.append(nounView.render().el);
+    },
+  });
+  var nounPileView = new NounPileView();
+ 
   // Handle update from server
   socket.on('message', function(msg){
     if(msg.event == 'new_card') {
@@ -123,13 +167,20 @@ $(function() {
       userNouns.remove(msg.data);
 
     } else if(msg.event == 'mode_playing') {
+      nounPile.remove(nounPile.models.slice(0));
       userNounView.enablePlay();
       $('#adj').html(msg.data.word);
       $('#judge').html(msg.data.judge);
 
     } else if(msg.event == 'mode_judging') {
       userNounView.disablePlay();
+      nounPile.each(function(noun){
+        noun.view.reveal();
+      });
     
+    } else if(msg.event == 'add_to_pile') {
+      nounPile.add(new PlayedNoun(msg.data));
+
     } else { alert(msg) }
   });
 
