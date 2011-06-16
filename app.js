@@ -130,24 +130,18 @@ socket.on('connection', function(client) {
 });
 
 // Game processes
-var mode; // ie: waiting, playing, judging
+var mode; // ie: playing, judging
 var playInt, judgeInt;
-
-// while(true) {
-  // Start in waiting mode, wait 30 sec
-  mode = 'waiting';
 
 function start_judge_timer(){
   judgeInt = setInterval(function(){
     mode = 'judging';
-    console.log("MODE CHANGED TO PLAYING");
 
     // Create an adjective(game) object - choose adj and judge
     var word = adjectives[Math.floor(Math.random()*adjectives.length)];
     ar.User.findAllByStatus('active', function(users) {
 
       var user = users[Math.floor(Math.random()*users.length)];
-
       adj = ar.Adj.create({
         word: word, 
         judge_id: user.id,
@@ -155,10 +149,6 @@ function start_judge_timer(){
       });
 
       adj.save(function(err, db_res){ });
-      
-      console.log("  word: " + word);
-      console.log("  judge: " + user.name);
-
       socket.broadcast(event_obj('mode_playing',{
         judge: user.name,
         word: word
@@ -175,7 +165,6 @@ function start_play_timer(){
     mode = 'judging';
     console.log("MODE CHANGED TO JUDGING");
    
-    // Notify client, reveal cards
     socket.broadcast(event_obj('mode_judging',''));
 
     start_judge_timer();
@@ -184,14 +173,3 @@ function start_play_timer(){
 }
 
 start_play_timer();
-
-  // Go into selection mode 
-  // Enable users to pick a card
-  // Set timer
-  // Handle event if all active users have selected or timer is triggered
-
-  // Switch to judging mode
-  // Enable judge to pick card
-  // Set timer
-  // Handle event if judge picks a card or timer is triggered
-// }
