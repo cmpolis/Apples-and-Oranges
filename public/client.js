@@ -6,7 +6,7 @@ $(function() {
   }
 
   // Socket.IO
-  var socket = new io.Socket(null, {port: 3001});
+  var socket = new io.Socket(null, {port: 3009});
   socket.connect();
 
   // Backbone
@@ -186,4 +186,3 @@ $(function() {
 
   
 });
-

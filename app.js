@@ -29,7 +29,7 @@ app.get('/', function(req, res){
   res.render('index');
 });
 
-app.listen(3001);
+app.listen(3009);
 
 // Helper functions
 function event_obj(event_name, data_obj) {
@@ -43,7 +43,6 @@ var adj; // Adjective that is in play
 var deal_noun = function(user_id, client) {
   var word = nouns[Math.floor(Math.random()*nouns.length)];
   var new_noun = ar.Noun.create({word: word, user_id: user_id});
-   
   new_noun.save(function(err, db_res){
     
     // Notify client of each card after save
