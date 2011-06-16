@@ -130,12 +130,10 @@ socket.on('connection', function(client) {
 });
 
 // Game processes
-var mode; // ie: playing, judging
 var playInt, judgeInt;
 
 function start_judge_timer(){
   judgeInt = setInterval(function(){
-    mode = 'judging';
 
     // Create an adjective(game) object - choose adj and judge
     var word = adjectives[Math.floor(Math.random()*adjectives.length)];
@@ -162,7 +160,6 @@ function start_judge_timer(){
 
 function start_play_timer(){
   playInt = setInterval(function(){
-    mode = 'judging';
     console.log("MODE CHANGED TO JUDGING");
    
     socket.broadcast(event_obj('mode_judging',''));
