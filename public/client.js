@@ -31,6 +31,7 @@ $(function() {
     },
     render: function(){
       $(this.el).html(this.model.get('word')+' <span class="play_noun">Play</span>');
+      $(this.el).children('.play_noun').hide();
       return this;
     },
     unrender: function(){
