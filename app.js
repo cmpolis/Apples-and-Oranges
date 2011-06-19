@@ -37,7 +37,7 @@ function event_obj(event_name, data_obj) {
            data: data_obj };
 }
 
-var adj; // Adjective that is in play
+var adj, win_noun; // Adjective that is in play
 
 // Assign user a noun card
 var deal_noun = function(user_id, client) {
@@ -74,7 +74,12 @@ socket.on('connection', function(client) {
   
   // Add user to database, send relavent data to client
   user.save(function(err, db_res) {
- 
+
+   client.send(event_obj('init', {
+     id: user.id,
+   }));
+
+    
     // Deal 7 cards
     deal_nouns(user.id, client);
 
@@ -122,8 +127,14 @@ socket.on('connection', function(client) {
       deal_noun(user.id, client);
     
     // Judge picks winning card
-    } else if(msg.event == 'judge_pick') {
-    
+    } else if(msg.event == 'pick_card') {
+      console.log('picked: ' + msg.data);
+      win_noun = ar.Noun.findById(msg.data, function(noun){
+        adj.win_noun_id = msg.data;
+        adj.save(function(err,res){ 
+          socket.broadcast(event_obj('winning_word', noun.word));
+        });
+      });
     } else { console.log(msg) }
   });
 
@@ -145,10 +156,11 @@ function start_judge_timer(){
         judge_id: user.id,
         status: 'playing'
       });
-
+    
       adj.save(function(err, db_res){ });
       socket.broadcast(event_obj('mode_playing',{
-        judge: user.name,
+        judge_name: user.name,
+        judge_id: user.id,
         word: word
       }));
     });

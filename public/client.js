@@ -9,6 +9,9 @@ $(function() {
   var socket = new io.Socket(null, {port: 3009});
   socket.connect();
 
+  var user_id;
+  var judging = false;
+
   // Backbone
   var Noun = Backbone.Model.extend();
   
@@ -115,9 +118,13 @@ $(function() {
   
   var PlayedNounView = Backbone.View.extend({
     tagName: 'li',
+    
+    events: {
+      'click span.pick_adj': 'pick'
+    },
 
     initialize: function(){
-      _.bindAll(this, 'render', 'unrender', 'reveal');
+      _.bindAll(this, 'render', 'unrender', 'reveal', 'pick');
 
       this.model.view = this;
       this.model.bind('remove', this.unrender);
@@ -130,7 +137,12 @@ $(function() {
       $(this.el).remove();
     },
     reveal: function(){
-      $(this.el).html(this.model.get('word'));
+      $(this.el).html(this.model.get('word')+' <span class="pick_adj">Pick</span>');
+      if(!judging) $(this.el).children('.pick_adj').hide();
+    },
+    pick: function(){
+      socket.send(event_obj('pick_card', this.model.id));
+      $(this.el).children('.pick_adj').hide();
     }
   });
 
@@ -147,7 +159,7 @@ $(function() {
         model: noun
       });
       this.el.append(nounView.render().el);
-    },
+    }
   });
   var nounPileView = new NounPileView();
  
@@ -169,18 +181,32 @@ $(function() {
 
     } else if(msg.event == 'mode_playing') {
       nounPile.remove(nounPile.models.slice(0));
-      userNounView.enablePlay();
+      judging = (user_id == msg.data.judge_id);
+      if(judging) {
+        $('#judge').html('You');
+        alert('You are judging');
+      
+      } else {
+        $('#judge').html(msg.data.judge_name);
+        userNounView.enablePlay();
+      
+      }
       $('#adj').html(msg.data.word);
-      $('#judge').html(msg.data.judge);
 
     } else if(msg.event == 'mode_judging') {
       userNounView.disablePlay();
       nounPile.each(function(noun){
         noun.view.reveal();
       });
-    
+     
     } else if(msg.event == 'add_to_pile') {
       nounPile.add(new PlayedNoun(msg.data));
+    
+    } else if(msg.event == 'winning_word') {
+      alert('won: ' + msg.data);
+ 
+    } else if(msg.event == 'init') {
+      user_id = msg.data.id;
 
     } else { alert(msg) }
   });
